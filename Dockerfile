@@ -1,47 +1,30 @@
-# Etapa base: PHP-FPM com extensões do Laravel e Composer
-FROM php:8.2-fpm-bullseye AS base
+# PHP-FPM em Alpine (leve e com extensões do Laravel)
+FROM php:8.2-fpm-alpine
 
-# Dependências e extensões
-RUN apt-get update && apt-get install -y \
-    git unzip libpng-dev libjpeg-dev libfreetype6-dev libonig-dev libzip-dev libicu-dev locales ca-certificates \
+# Dependências do sistema e do PHP
+RUN apk add --no-cache \
+    nginx curl bash icu-dev libzip-dev oniguruma-dev \
+    libpng-dev freetype-dev libjpeg-turbo-dev \
  && docker-php-ext-configure gd --with-freetype --with-jpeg \
- && docker-php-ext-install pdo pdo_mysql mbstring zip intl gd \
- && rm -rf /var/lib/apt/lists/*
+ && docker-php-ext-install pdo pdo_mysql mbstring zip intl gd
 
 # Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
+# Código da aplicação
 WORKDIR /var/www/html
 COPY . .
 
-# Instala dependências do PHP e otimiza autoload
+# Dependências PHP (produção)
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 
-# Permissões para cache e logs
-RUN chown -R www-data:www-data storage bootstrap/cache
+# Permissões de runtime
+RUN chown -R www-data:www-data storage bootstrap/cache \
+ && mkdir -p /run/nginx
 
-# Etapa final: Nginx + PHP-FPM
-FROM debian:bullseye-slim
-
-RUN apt-get update && apt-get install -y nginx php8.2-fpm ca-certificates curl \
- && rm -rf /var/lib/apt/lists/*
-
-# Copia app da etapa base
-COPY --from=base /var/www/html /var/www/html
-
-# Copia script de inicialização
+# Script de inicialização (gera conf do Nginx com a $PORT do Render)
 COPY start.sh /start.sh
 RUN chmod +x /start.sh
 
-# Ajusta usuário/donos
-RUN chown -R www-data:www-data /var/www/html /var/lib/nginx /var/log/nginx
-
-# Variáveis úteis
-ENV APP_ENV=production \
-    APP_DEBUG=false
-
-# Porta do Render (Render injeta $PORT)
 EXPOSE 8080
-
-WORKDIR /var/www/html
 CMD ["/start.sh"]
