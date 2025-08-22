@@ -1,10 +1,13 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 set -e
 
 PORT="${PORT:-8080}"
 
-# Nginx conf usando a porta do Render
-cat > /etc/nginx/conf.d/default.conf <<NGINX
+# Garante diretórios do Nginx no Alpine
+mkdir -p /run/nginx /etc/nginx/http.d
+
+# Cria o virtual host usando a porta do Render
+cat > /etc/nginx/http.d/default.conf <<EOF
 server {
     listen ${PORT};
     server_name _;
@@ -25,9 +28,9 @@ server {
 
     client_max_body_size 10M;
 }
-NGINX
+EOF
 
-# APP_KEY (melhor setar no Render; se faltar, gera temporário)
+# APP_KEY (recomendado definir no Render; senão gera temporário)
 if [ -z "$APP_KEY" ]; then
   [ -f .env ] || cp .env.example .env || true
   php artisan key:generate || true
@@ -36,7 +39,7 @@ else
   sed -i "s|^APP_KEY=.*|APP_KEY=${APP_KEY}|g" .env
 fi
 
-# APP_URL padrão (ajuste nas env vars depois)
+# APP_URL padrão, se faltar
 grep -q "^APP_URL=" .env || echo "APP_URL=http://localhost" >> .env
 
 # Caches do Laravel
@@ -44,7 +47,7 @@ php artisan config:cache || true
 php artisan route:cache || true
 php artisan view:cache || true
 
-# Permissões
+# Permissões necessárias
 chown -R www-data:www-data storage bootstrap/cache
 
 # Sobe PHP-FPM e Nginx
