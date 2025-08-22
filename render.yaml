@@ -2,44 +2,27 @@ services:
   - type: web
     name: carta-da-maria
     env: docker            # usa o Dockerfile da raiz
-    plan: free             # plano gratuito
-    region: oregon         # troque se quiser (us-east é bom pro BR)
+    plan: free
+    region: virginia       # melhor latência para o Brasil
     autoDeploy: true
 
-    # Render injeta a porta via $PORT; seu start.sh já respeita isso
-    runtime:
-      docker:
-        # Se seu Dockerfile estiver na raiz, não precisa mexer.
-        # Se mudar o nome/local do Dockerfile, declare "dockerfilePath".
-        # dockerfilePath: ./Dockerfile
-        # Não precisa startCommand/buildCommand aqui; o Dockerfile + start.sh já cuidam.
-
-    # Health check simples (Laravel responde 200 na raiz)
+    # Health check simples
     healthCheckPath: /
     healthCheckTimeout: 30
 
-    # Variáveis de ambiente da aplicação
+    # Variáveis de ambiente
     envVars:
       - key: APP_ENV
         value: production
       - key: APP_DEBUG
         value: "false"
       - key: APP_URL
-        # Depois que o serviço estiver no ar, troque para sua URL final
         value: https://seu-subdominio.onrender.com
       - key: APP_KEY
-        # Gere localmente: php artisan key:generate --show
-        # Cole aqui algo como: base64:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
         value: base64:COLE_AQUI_SUA_APP_KEY
-      # Opcional: se quiser manter a carta no .env do Render em vez do controller
+      # Opcional — manter o texto da carta no env:
       # - key: CARTA_TEXTO
       #   value: "Seu texto lindo aqui ❤️ com quebras de linha\nfuncionando"
 
     # Escalonamento (Free = 1 instância)
     numInstances: 1
-
-    # Se algum dia você precisar de disco persistente (uploads etc.), descomente:
-    # disks:
-    #   - name: storage
-    #     mountPath: /var/www/html/storage
-    #     sizeGB: 1
