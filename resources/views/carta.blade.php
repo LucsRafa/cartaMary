@@ -137,9 +137,9 @@
   </div>
 
   <button id="audioBtn" class="audio-toggle muted" aria-pressed="false">🔇 Ligar som</button>
-  <audio id="bgAudio" preload="auto" loop autoplay muted>
-    <source src="{{ asset('audio/ambiente.mp3') }}" type="audio/mpeg">
-  </audio>
+  <audio id="bgAudio" preload="auto" loop autoplay muted playsinline>
+  <source src="{{ asset('audio/ambiente.mp3') }}" type="audio/mpeg">
+</audio>
 
   <svg width="0" height="0" style="position:absolute">
     <defs>
@@ -181,31 +181,69 @@
       svg.addEventListener('animationend',()=>svg.remove());
     }
 
-    // ===== Som =====
-    const audio=document.getElementById('bgAudio');
-    const audioBtn=document.getElementById('audioBtn');
-    async function startAudio(volume=0.3){
-      try{
-        audio.volume=volume; audio.muted=false;
-        await audio.play();
-        if(audioBtn){
-          audioBtn.textContent='🔊 Desligar som';
-          audioBtn.classList.remove('muted');
-          audioBtn.setAttribute('aria-pressed','true');
-        }
-      }catch(e){}
+     // ===== Som (autoplay + destrave por interação) =====
+  const audio   = document.getElementById('bgAudio');
+  const audioBtn = document.getElementById('audioBtn');
+
+  function setBtn(playing){
+    if(!audioBtn) return;
+    if(playing){
+      audioBtn.textContent='🔊 Desligar som';
+      audioBtn.classList.remove('muted');
+      audioBtn.setAttribute('aria-pressed','true');
+    }else{
+      audioBtn.textContent='🔇 Ligar som';
+      audioBtn.classList.add('muted');
+      audioBtn.setAttribute('aria-pressed','false');
     }
-    if(audioBtn){
-      audioBtn.addEventListener('click',async()=>{
-        if(audio.paused){await startAudio();}
-        else{
-          audio.pause();
-          audioBtn.textContent='🔇 Ligar som';
-          audioBtn.classList.add('muted');
-          audioBtn.setAttribute('aria-pressed','false');
-        }
-      });
+  }
+
+  async function tryPlay(volume=0.3){
+    try{
+      audio.volume = volume;
+      audio.muted  = false;
+      await audio.play();
+      setBtn(true);
+      return true;
+    }catch(e){
+      setBtn(false);
+      return false;
     }
+  }
+
+  function bindUnlockOnce(){
+    const opts = { once:true, passive:true };
+    const unlock = async () => {
+      audio.muted = false;              // iOS gosta disso antes do play
+      const ok = await tryPlay(0.3);
+      if(ok) detach();
+    };
+    function detach(){
+      window.removeEventListener('pointerdown', unlock, opts);
+      window.removeEventListener('click',       unlock, opts);
+      window.removeEventListener('touchstart',  unlock, opts);
+      window.removeEventListener('keydown',     unlock, opts);
+      window.removeEventListener('wheel',       unlock, opts);
+      document.removeEventListener('visibilitychange', onVis);
+    }
+    function onVis(){
+      if(document.visibilityState === 'visible') unlock();
+    }
+    window.addEventListener('pointerdown', unlock, opts);
+    window.addEventListener('click',       unlock, opts);
+    window.addEventListener('touchstart',  unlock, opts);
+    window.addEventListener('keydown',     unlock, opts);
+    window.addEventListener('wheel',       unlock, opts);
+    document.addEventListener('visibilitychange', onVis, { once:true });
+  }
+
+  if(audioBtn){
+    audioBtn.addEventListener('click', async () => {
+      if(audio.paused){ await tryPlay(); }
+      else { audio.pause(); setBtn(false); }
+    });
+  }
+
 
     // ===== Confetes =====
     function burst(centerX=0.5,centerY=0.6,count=120){
@@ -245,18 +283,32 @@
       });
     }
 
-    // ===== Init =====
-    window.addEventListener('load',async()=>{
-      await startAudio(0.3);
-      for(let i=0;i<12;i++) setTimeout(spawnHeart,i*300);
-      setInterval(spawnHeart,300);
-      confetti({particleCount:80,angle:60,spread:55,origin:{x:0},colors:['#ff8fb2','#ffe4ec','#ffd6e2']});
-      confetti({particleCount:80,angle:120,spread:55,origin:{x:1},colors:['#ff8fb2','#ffe4ec','#ffd6e2']});
-      setTimeout(()=>burst(0.5,0.7,160),500);
-      setTimeout(heartBurst,1400);
-      await typeWriterAll(fullLetter);
-      skipBtn.style.display='none';
-    });
+     // ===== Init (mantenha o resto do seu código igual) =====
+  window.addEventListener('load', async () => {
+    // Pré-play silencioso ajuda o navegador a “preparar” o áudio
+    audio.muted = true;
+    await audio.play().catch(()=>{});
+
+    // Tenta tocar com volume baixo; se bloquear, arma o destrave por gesto
+    const ok = await tryPlay(0.25);
+    if(!ok) bindUnlockOnce();
+
+    // === tudo abaixo é o que você já tinha ===
+    for(let i=0;i<12;i++) setTimeout(spawnHeart,i*300);
+    setInterval(spawnHeart,300);
+    confetti({particleCount:80,angle:60,spread:55,origin:{x:0},colors:['#ff8fb2','#ffe4ec','#ffd6e2']});
+    confetti({particleCount:80,angle:120,spread:55,origin:{x:1},colors:['#ff8fb2','#ffe4ec','#ffd6e2']});
+    setTimeout(()=>burst(0.5,0.7,160),500);
+    setTimeout(heartBurst,1400);
+    await typeWriterAll(fullLetter);
+    skipBtn.style.display='none';
+  });
+
+  document.addEventListener('visibilitychange', async () => {
+    if(document.visibilityState==='visible' && audio.paused){
+      await tryPlay(0.25);
+    }
+  });
   </script>
 </body>
 </html>
