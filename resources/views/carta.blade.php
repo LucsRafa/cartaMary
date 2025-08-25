@@ -137,9 +137,23 @@
   </div>
 
   <button id="audioBtn" class="audio-toggle muted" aria-pressed="false">🔇 Ligar som</button>
-  <audio id="bgAudio" preload="auto" loop autoplay muted playsinline>
-  <source src="{{ asset('audio/ambiente.mp3') }}" type="audio/mpeg">
-</audio>
+
+  <!-- Overlay para destravar som (só aparece se bloquear) -->
+  <div id="audioOverlay" style="
+    position:fixed;inset:0;display:none;align-items:center;justify-content:center;
+    background:rgba(0,0,0,.35);backdrop-filter:blur(2px);z-index:6;">
+    <button id="audioStart" style="
+      background:#ff8fb2;color:#fff;border:none;border-radius:999px;
+      padding:.9rem 1.2rem;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,.35);">
+      🎵 Tocar música
+    </button>
+  </div>
+
+  <!-- Áudio com 2 fontes (AAC + MP3) -->
+  <audio id="bgAudio" preload="auto" loop muted playsinline webkit-playsinline>
+    <source src="{{ asset('audio/ambiente.m4a') }}" type="audio/mp4">
+    <source src="{{ asset('audio/ambiente.mp3') }}" type="audio/mpeg">
+  </audio>
 
   <svg width="0" height="0" style="position:absolute">
     <defs>
@@ -181,69 +195,79 @@
       svg.addEventListener('animationend',()=>svg.remove());
     }
 
-     // ===== Som (autoplay + destrave por interação) =====
-  const audio   = document.getElementById('bgAudio');
-  const audioBtn = document.getElementById('audioBtn');
+    // ===== Som ROBUSTO (desktop e mobile) =====
+    const audio    = document.getElementById('bgAudio');
+    const audioBtn = document.getElementById('audioBtn');
+    const overlay  = document.getElementById('audioOverlay');
+    const startBtn = document.getElementById('audioStart');
 
-  function setBtn(playing){
-    if(!audioBtn) return;
-    if(playing){
-      audioBtn.textContent='🔊 Desligar som';
-      audioBtn.classList.remove('muted');
-      audioBtn.setAttribute('aria-pressed','true');
-    }else{
-      audioBtn.textContent='🔇 Ligar som';
-      audioBtn.classList.add('muted');
-      audioBtn.setAttribute('aria-pressed','false');
+    function setBtn(playing){
+      if(!audioBtn) return;
+      if(playing){
+        audioBtn.textContent='🔊 Desligar som';
+        audioBtn.classList.remove('muted');
+        audioBtn.setAttribute('aria-pressed','true');
+      }else{
+        audioBtn.textContent='🔇 Ligar som';
+        audioBtn.classList.add('muted');
+        audioBtn.setAttribute('aria-pressed','false');
+      }
     }
-  }
 
-  async function tryPlay(volume=0.3){
-    try{
-      audio.volume = volume;
-      audio.muted  = false;
-      await audio.play();
-      setBtn(true);
-      return true;
-    }catch(e){
-      setBtn(false);
-      return false;
+    // Toca direto dentro do gesto (Safari/Chrome exigem)
+    function playDirect(vol=0.3){
+      try{
+        audio.muted = false;
+        audio.volume = vol;
+        const p = audio.play(); // não usar await aqui
+        if (p && typeof p.then === 'function') {
+          p.then(()=> setBtn(true)).catch(()=> setBtn(false));
+        } else {
+          setBtn(!audio.paused);
+        }
+        return true;
+      }catch(e){
+        setBtn(false);
+        return false;
+      }
     }
-  }
 
-  function bindUnlockOnce(){
-    const opts = { once:true, passive:true };
-    const unlock = async () => {
-      audio.muted = false;              // iOS gosta disso antes do play
-      const ok = await tryPlay(0.3);
-      if(ok) detach();
-    };
-    function detach(){
-      window.removeEventListener('pointerdown', unlock, opts);
-      window.removeEventListener('click',       unlock, opts);
-      window.removeEventListener('touchstart',  unlock, opts);
-      window.removeEventListener('keydown',     unlock, opts);
-      window.removeEventListener('wheel',       unlock, opts);
-      document.removeEventListener('visibilitychange', onVis);
+    // Fallback com await (quando permitido)
+    async function tryPlay(vol=0.3){
+      try{
+        audio.muted = false;
+        audio.volume = vol;
+        await audio.play();
+        setBtn(true);
+        return true;
+      }catch(e){
+        setBtn(false);
+        return false;
+      }
     }
-    function onVis(){
-      if(document.visibilityState === 'visible') unlock();
+
+    function showOverlay(){ if (overlay) overlay.style.display = 'flex'; }
+    function hideOverlay(){ if (overlay) overlay.style.display = 'none'; }
+
+    // Botão flutuante liga/desliga
+    if (audioBtn) {
+      audioBtn.addEventListener('click', async () => {
+        if (audio.paused) {
+          if (!playDirect()) await tryPlay();
+        } else {
+          audio.pause();
+          setBtn(false);
+        }
+      });
     }
-    window.addEventListener('pointerdown', unlock, opts);
-    window.addEventListener('click',       unlock, opts);
-    window.addEventListener('touchstart',  unlock, opts);
-    window.addEventListener('keydown',     unlock, opts);
-    window.addEventListener('wheel',       unlock, opts);
-    document.addEventListener('visibilitychange', onVis, { once:true });
-  }
 
-  if(audioBtn){
-    audioBtn.addEventListener('click', async () => {
-      if(audio.paused){ await tryPlay(); }
-      else { audio.pause(); setBtn(false); }
-    });
-  }
-
+    // Overlay (aparece só se bloquear)
+    if (startBtn) {
+      startBtn.addEventListener('click', () => {
+        const ok = playDirect(0.28);
+        if (ok) hideOverlay();
+      });
+    }
 
     // ===== Confetes =====
     function burst(centerX=0.5,centerY=0.6,count=120){
@@ -283,32 +307,56 @@
       });
     }
 
-     // ===== Init (mantenha o resto do seu código igual) =====
-  window.addEventListener('load', async () => {
-    // Pré-play silencioso ajuda o navegador a “preparar” o áudio
-    audio.muted = true;
-    await audio.play().catch(()=>{});
+    // ===== Init =====
+    window.addEventListener('load', async () => {
+      // 1) Pré-play silencioso (prepara o player)
+      audio.muted = true;
+      try { await audio.play(); } catch(_) {}
+      audio.pause();
 
-    // Tenta tocar com volume baixo; se bloquear, arma o destrave por gesto
-    const ok = await tryPlay(0.25);
-    if(!ok) bindUnlockOnce();
+      // 2) Tenta tocar com som (alguns navegadores deixam sem gesto)
+      const ok = await tryPlay(0.25);
 
-    // === tudo abaixo é o que você já tinha ===
-    for(let i=0;i<12;i++) setTimeout(spawnHeart,i*300);
-    setInterval(spawnHeart,300);
-    confetti({particleCount:80,angle:60,spread:55,origin:{x:0},colors:['#ff8fb2','#ffe4ec','#ffd6e2']});
-    confetti({particleCount:80,angle:120,spread:55,origin:{x:1},colors:['#ff8fb2','#ffe4ec','#ffd6e2']});
-    setTimeout(()=>burst(0.5,0.7,160),500);
-    setTimeout(heartBurst,1400);
-    await typeWriterAll(fullLetter);
-    skipBtn.style.display='none';
-  });
+      // 3) Se bloquear, mostra overlay e também destrava no 1º gesto global
+      if (!ok) {
+        showOverlay();
 
-  document.addEventListener('visibilitychange', async () => {
-    if(document.visibilityState==='visible' && audio.paused){
-      await tryPlay(0.25);
-    }
-  });
+        const unlock = () => {
+          if (playDirect(0.28)) {
+            hideOverlay();
+            detach();
+          }
+        };
+        const opts = { once:true, passive:true };
+        function detach(){
+          window.removeEventListener('pointerdown', unlock, opts);
+          window.removeEventListener('touchstart',  unlock, opts);
+          window.removeEventListener('click',       unlock, opts);
+          window.removeEventListener('keydown',     unlock, opts);
+        }
+        window.addEventListener('pointerdown', unlock, opts);
+        window.addEventListener('touchstart',  unlock, opts);
+        window.addEventListener('click',       unlock, opts);
+        window.addEventListener('keydown',     unlock, opts);
+      }
+
+      // ===== (resto do seu fluxo) =====
+      for(let i=0;i<12;i++) setTimeout(spawnHeart,i*300);
+      setInterval(spawnHeart,300);
+      confetti({particleCount:80,angle:60,spread:55,origin:{x:0},colors:['#ff8fb2','#ffe4ec','#ffd6e2']});
+      confetti({particleCount:80,angle:120,spread:55,origin:{x:1},colors:['#ff8fb2','#ffe4ec','#ffd6e2']});
+      setTimeout(()=>burst(0.5,0.7,160),500);
+      setTimeout(heartBurst,1400);
+      await typeWriterAll(fullLetter);
+      skipBtn.style.display='none';
+    });
+
+    // se voltar para a aba e estiver pausado, tenta ligar de novo
+    document.addEventListener('visibilitychange', async () => {
+      if (document.visibilityState==='visible' && audio.paused) {
+        await tryPlay(0.25);
+      }
+    });
   </script>
 </body>
 </html>
