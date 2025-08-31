@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Para você 💌</title>
   <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg?v=1') }}">
-  <!-- Fonte manuscrita -->
   <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&display=swap" rel="stylesheet">
 
   <style>
@@ -16,43 +15,27 @@
       background: radial-gradient(1200px 600px at 50% -10%, #7a1330 0%, var(--bg) 60%);
       color:var(--text);
       min-height:100vh;
-      overflow-y:auto;
-      overflow-x:hidden;
+      overflow-y:auto; overflow-x:hidden;
       scroll-behavior:smooth;
       font-family:system-ui,sans-serif;
     }
-    .wrap{ position:relative; min-height:100vh; display:grid; place-items:center; padding:24px; }
+    .wrap{ position:relative; min-height:100vh; display:grid; place-items:center; padding:24px;}
     .carta{
       position:relative; z-index:2; max-width:760px; background:var(--panel);
-      border:1px solid rgba(255,255,255,.09);
-      padding:20px; border-radius:18px; box-shadow:0 15px 60px rgba(0,0,0,.45);
+      border:1px solid rgba(255,255,255,.09); padding:20px; border-radius:18px; box-shadow:0 15px 60px rgba(0,0,0,.45);
     }
     .paper{
       position:relative;
       background:repeating-linear-gradient(to bottom, var(--paper) 0 30px, var(--paper-line) 34px 36px);
-      border-radius:14px;
-      padding:26px 26px 22px 34px;
-      box-shadow:0 12px 24px var(--paper-shadow);
-      border:1px solid rgba(0,0,0,.06);
+      border-radius:14px; padding:26px 26px 22px 34px; box-shadow:0 12px 24px var(--paper-shadow); border:1px solid rgba(0,0,0,.06);
     }
-    .paper:before{
-      content:""; position:absolute; left:18px; top:12px; bottom:12px; width:2px;
-      background:#ff9cb6; opacity:.6; border-radius:2px;
-    }
+    .paper:before{ content:""; position:absolute; left:18px; top:12px; bottom:12px; width:2px; background:#ff9cb6; opacity:.6; border-radius:2px; }
     h1{ margin:0 0 .75rem 0; font-size:1.6rem; color:var(--panel) }
     .texto-carta{
-      white-space: pre-line;
-      font-family:'Dancing Script',cursive;
-      color:#3d0d1c;
-      font-size:1.55rem;
-      line-height:2.2rem;
-      text-shadow:0 1px 0 rgba(255,255,255,.35);
-      text-align:left;
+      white-space: pre-line; font-family:'Dancing Script',cursive; color:#3d0d1c;
+      font-size:1.55rem; line-height:2.2rem; text-shadow:0 1px 0 rgba(255,255,255,.35); text-align:left;
     }
-    .assinatura{
-      margin-top:1rem; color:#5e0a2e; font-weight:700; text-align:right; padding-right:.4rem;
-      font-family:'Dancing Script',cursive; font-size:1.4rem;
-    }
+    .assinatura{ margin-top:1rem; color:#5e0a2e; font-weight:700; text-align:right; padding-right:.4rem; font-family:'Dancing Script',cursive; font-size:1.4rem; }
 
     .hearts{ position:absolute; inset:0; overflow:hidden; z-index:1; pointer-events:none; }
     @keyframes floatUp {
@@ -60,16 +43,9 @@
       10%{ opacity:1; }
       100%{ transform: translateY(-120vh) translateX(var(--drift,0px)) rotate(12deg); opacity:0; }
     }
-    .heart{
-      position:absolute; width:var(--w,120px); height:var(--h,110px);
-      left:var(--x,50%); bottom:-140px; animation:floatUp var(--dur,12s) linear forwards;
-      filter:drop-shadow(0 10px 18px rgba(0,0,0,.35));
-    }
+    .heart{ position:absolute; width:var(--w,120px); height:var(--h,110px); left:var(--x,50%); bottom:-140px; animation:floatUp var(--dur,12s) linear forwards; filter:drop-shadow(0 10px 18px rgba(0,0,0,.35)); }
 
-    .sussurro{
-      position:absolute; bottom:24px; width:100%; text-align:center; color:var(--accent); opacity:.9; font-size:.95rem; z-index:2;
-      animation:pulse 3s ease-in-out infinite;
-    }
+    .sussurro{ position:absolute; bottom:24px; width:100%; text-align:center; color:var(--accent); opacity:.9; font-size:.95rem; z-index:2; animation:pulse 3s ease-in-out infinite; }
     @keyframes pulse{0%,100%{opacity:.55}50%{opacity:.95}}
 
     .audio-toggle{
@@ -99,15 +75,17 @@
     <div class="sussurro">Leia devagar e aproveite… 💞</div>
   </div>
 
+  <!-- Botão de áudio -->
   <button id="audioBtn" class="audio-toggle muted" aria-pressed="false">🔇 Ligar som</button>
 
   <!-- Áudio com múltiplas fontes -->
-  <audio id="bgAudio" preload="auto" loop autoplay muted playsinline webkit-playsinline>
+  <audio id="bgAudio" preload="auto" loop playsinline webkit-playsinline muted>
     <source src="{{ asset('audio/ambiente.ogg') }}" type="audio/ogg">
     <source src="{{ asset('audio/ambiente.m4a') }}" type="audio/mp4">
     <source src="{{ asset('audio/ambiente.mp3') }}" type="audio/mpeg">
   </audio>
 
+  <!-- Clip de coração -->
   <svg width="0" height="0" style="position:absolute">
     <defs>
       <clipPath id="heartClip" clipPathUnits="objectBoundingBox">
@@ -118,27 +96,28 @@
 
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
   <script>
+  (() => {
+    'use strict';
+
     // ===== Corações =====
     const fotos = @json($fotos);
     const area  = document.getElementById('hearts');
 
     function spawnHeart(){
-      if(!fotos.length) return;
-      const w=90+Math.random()*80;
-      const h=w*0.92;
+      if(!Array.isArray(fotos) || !fotos.length || !area) return;
+      const w=90+Math.random()*80, h=w*0.92;
       const x=Math.random()*(window.innerWidth-w);
-      const dur=10+Math.random()*8;
-      const drift=(Math.random()*160-80);
+      const dur=10+Math.random()*8, drift=(Math.random()*160-80);
       const foto=fotos[Math.floor(Math.random()*fotos.length)];
 
       const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
-      svg.setAttribute('viewBox', `0 0 ${w} ${h}`);  // <-- corrigido (template string)
+      svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
       svg.classList.add('heart');
-      svg.style.setProperty('--w', w+'px');
-      svg.style.setProperty('--h', h+'px');
-      svg.style.setProperty('--x', x+'px');
-      svg.style.setProperty('--dur', dur+'s');
-      svg.style.setProperty('--drift', drift+'px');
+      svg.style.setProperty('--w', `${w}px`);
+      svg.style.setProperty('--h', `${h}px`);
+      svg.style.setProperty('--x', `${x}px`);
+      svg.style.setProperty('--dur', `${dur}s`);
+      svg.style.setProperty('--drift', `${drift}px`);
 
       const image=document.createElementNS('http://www.w3.org/2000/svg','image');
       image.setAttributeNS('http://www.w3.org/1999/xlink','href', foto);
@@ -152,9 +131,9 @@
       svg.addEventListener('animationend', ()=>svg.remove());
     }
 
-    // ===== Som (autoplay + destrave por interação) =====
-    const audio   = document.getElementById('bgAudio');
-    const audioBtn= document.getElementById('audioBtn');
+    // ===== Áudio: autoplay silencioso + desbloqueio na 1ª interação + botão =====
+    const audio    = document.getElementById('bgAudio');
+    const audioBtn = document.getElementById('audioBtn');
 
     function setBtn(playing){
       if(!audioBtn) return;
@@ -162,14 +141,14 @@
         audioBtn.textContent='🔊 Desligar som';
         audioBtn.classList.remove('muted');
         audioBtn.setAttribute('aria-pressed','true');
-      }else{
+      } else {
         audioBtn.textContent='🔇 Ligar som';
         audioBtn.classList.add('muted');
         audioBtn.setAttribute('aria-pressed','false');
       }
     }
 
-    async function tryPlay(volume=0.3){
+    async function playWith(volume=0.35){
       try{
         audio.volume = volume;
         audio.muted  = false;
@@ -177,104 +156,107 @@
         setBtn(true);
         return true;
       }catch(e){
+        console.warn('[AUDIO] play falhou:', e?.name || e);
+        // fallback: mostra controles nativos
+        audio.setAttribute('controls','controls');
         setBtn(false);
         return false;
       }
     }
 
-    function bindUnlockOnce(){
-      const opts = { once:true, passive:true };
+    function armUnlockOnce(){
+      const opts={ once:true, passive:true };
       const unlock = async () => {
-        audio.muted = false;
-        const ok = await tryPlay(0.3);
+        const ok = await playWith(0.35);
         if(ok) detach();
       };
       function detach(){
         window.removeEventListener('pointerdown', unlock, opts);
-        window.removeEventListener('click',       unlock, opts);
-        window.removeEventListener('touchstart',  unlock, opts);
         window.removeEventListener('keydown',     unlock, opts);
-        window.removeEventListener('wheel',       unlock, opts);
-        document.removeEventListener('visibilitychange', onVis);
+        window.removeEventListener('touchstart',  unlock, opts);
       }
-      function onVis(){ if(document.visibilityState === 'visible') unlock(); }
       window.addEventListener('pointerdown', unlock, opts);
-      window.addEventListener('click',       unlock, opts);
-      window.addEventListener('touchstart',  unlock, opts);
       window.addEventListener('keydown',     unlock, opts);
-      window.addEventListener('wheel',       unlock, opts);
-      document.addEventListener('visibilitychange', onVis, { once:true });
+      window.addEventListener('touchstart',  unlock, opts);
     }
 
     if(audioBtn){
-      audioBtn.addEventListener('click', async () => {
-        if(audio.paused){ await tryPlay(); }
+      audioBtn.addEventListener('click', async ()=>{
+        if(audio.paused){ await playWith(); }
         else { audio.pause(); setBtn(false); }
       });
     }
 
-    // ===== Confetes =====
-    function burst(centerX=0.5,centerY=0.6,count=120){
-      confetti({particleCount:count,spread:70,startVelocity:35,origin:{x:centerX,y:centerY},scalar:1.0,colors:['#ff8fb2','#ffd6e2','#ffe4ec','#ff6b95','#ffffff']});
-    }
-    function heartBurst(){
-      try{
-        const heart=confetti.shapeFromText('❤');
-        confetti({particleCount:30,spread:60,origin:{x:0.2+Math.random()*0.6,y:0.7},shapes:[heart],scalar:1.4,ticks:200});
-      }catch{ burst(0.5,0.7,80); }
+    // Logs úteis
+    if(audio){
+      audio.addEventListener('error',()=>{
+        const code=audio.error?.code, map={1:'ABORTED',2:'NETWORK',3:'DECODE',4:'SRC_NOT_SUPPORTED'};
+        console.warn('[AUDIO ERROR]', map[code]||code, audio.error);
+      });
+      audio.addEventListener('loadedmetadata', ()=>console.log('[AUDIO] metadata OK, duration=', audio.duration));
+      audio.addEventListener('canplay', ()=>console.log('[AUDIO] canplay'));
     }
 
     // ===== Typewriter =====
-    const fullLetter=@json($carta);
-    const typeEl=document.getElementById('typewriter');
-    const skipBtn=document.getElementById('skipType');
-    const SPEED=22, PUNCT_PAUSE=180;
-    let skipped=false;
+    const fullLetter = @json($carta);
+    const typeEl  = document.getElementById('typewriter');
+    const skipBtn = document.getElementById('skipType');
+    const SPEED=22, PUNCT_PAUSE=180; let skipped=false;
 
     async function typeWriterAll(text){
-      text=String(text).replace(/\r\n/g,'\n');
+      if(!typeEl) return;
+      text = String(text ?? '').replace(/\r\n/g,'\n');
       for(let i=0;i<text.length;i++){
         if(skipped){ typeEl.textContent=text; return; }
-        typeEl.textContent+=text[i];
-        let delay=SPEED;
-        if(/[\.!\?…]/.test(text[i])) delay+=PUNCT_PAUSE;
-        if(text[i]==='\n') delay+=60;
+        typeEl.textContent += text[i];
+        let delay = SPEED;
+        if(/[\.!\?…]/.test(text[i])) delay += PUNCT_PAUSE;
+        if(text[i]==='\n') delay += 60;
         await new Promise(r=>setTimeout(r,delay));
       }
     }
     if(skipBtn){
       skipBtn.addEventListener('click',()=>{
-        skipped=true; typeEl.textContent=fullLetter; skipBtn.style.display='none';
+        skipped=true; if(typeEl) typeEl.textContent = fullLetter ?? ''; skipBtn.style.display='none';
       });
     }
 
     // ===== Init =====
     window.addEventListener('load', async () => {
-      // “Pré-play” silencioso
-      audio.muted = true;
-      await audio.play().catch(()=>{});
-      audio.pause();
+      // 1) tenta autoplay silencioso (permitido pelos browsers)
+      if(audio){
+        try{
+          audio.muted = true;
+          await audio.play(); // toca em mute
+          console.log('[AUDIO] autoplay silencioso OK');
+        }catch(e){
+          console.warn('[AUDIO] autoplay silencioso bloqueado:', e?.name || e);
+        }
+        // arma desbloqueio de som na 1ª interação
+        armUnlockOnce();
+        setBtn(!audio.paused);
+      }
 
-      // Tenta autoplay com som baixo
-      const ok = await tryPlay(0.25);
-      if(!ok) bindUnlockOnce();
-
-      // Corações + confete + carta
+      // 2) corações + confetes
       for(let i=0;i<12;i++) setTimeout(spawnHeart,i*300);
       setInterval(spawnHeart,300);
       confetti({particleCount:80,angle:60,spread:55,origin:{x:0},colors:['#ff8fb2','#ffe4ec','#ffd6e2']});
       confetti({particleCount:80,angle:120,spread:55,origin:{x:1},colors:['#ff8fb2','#ffe4ec','#ffd6e2']});
-      setTimeout(()=>burst(0.5,0.7,160),500);
-      setTimeout(heartBurst,1400);
+      setTimeout(()=>{confetti({particleCount:160,spread:70,startVelocity:35,origin:{x:0.5,y:0.6}})},500);
+
+      // 3) escreve a carta
       await typeWriterAll(fullLetter);
-      skipBtn.style.display='none';
+      if(skipBtn) skipBtn.style.display='none';
     });
 
-    document.addEventListener('visibilitychange', async () => {
-      if(document.visibilityState==='visible' && audio.paused){
-        await tryPlay(0.25);
+    document.addEventListener('visibilitychange', async ()=>{
+      if(document.visibilityState==='visible' && audio && audio.paused){
+        // se voltar pro tab e ainda estiver pausado, tenta de novo (silencioso → gesto libera)
+        try{ audio.muted = true; await audio.play(); }catch(_){}
       }
     });
+
+  })();
   </script>
 </body>
 </html>
