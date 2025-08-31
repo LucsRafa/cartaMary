@@ -9,58 +9,37 @@
   <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&display=swap" rel="stylesheet">
 
   <style>
-    :root { 
-      --bg:#3d0d1c;
-      --panel:#5e0a2e;
-      --text:#ffe4ec;
-      --muted:#ffd6e2;
-      --accent:#ff8fb2;
-      --paper:#fff8fb;
-      --paper-line:#ffd3e2;
-      --paper-shadow: rgba(0,0,0,.25);
-    }
-
+    :root { --bg:#3d0d1c; --panel:#5e0a2e; --text:#ffe4ec; --muted:#ffd6e2; --accent:#ff8fb2; --paper:#fff8fb; --paper-line:#ffd3e2; --paper-shadow: rgba(0,0,0,.25); }
     *{box-sizing:border-box}
-    body{ 
-      margin:0; 
-      background: radial-gradient(1200px 600px at 50% -10%, #7a1330 0%, var(--bg) 60%); 
-      color:var(--text); 
-      min-height:100vh; 
+    body{
+      margin:0;
+      background: radial-gradient(1200px 600px at 50% -10%, #7a1330 0%, var(--bg) 60%);
+      color:var(--text);
+      min-height:100vh;
       overflow-y:auto;
       overflow-x:hidden;
       scroll-behavior:smooth;
       font-family:system-ui,sans-serif;
     }
-    .wrap{ position:relative; min-height:100vh; display:grid; place-items:center; padding:24px;}
-
+    .wrap{ position:relative; min-height:100vh; display:grid; place-items:center; padding:24px; }
     .carta{
-      position:relative; z-index:2; max-width:760px; background:var(--panel); 
+      position:relative; z-index:2; max-width:760px; background:var(--panel);
       border:1px solid rgba(255,255,255,.09);
       padding:20px; border-radius:18px; box-shadow:0 15px 60px rgba(0,0,0,.45);
     }
-
     .paper{
       position:relative;
-      background:
-        repeating-linear-gradient(
-          to bottom,
-          var(--paper) 0 30px,
-          var(--paper-line) 34px 36px
-        );
+      background:repeating-linear-gradient(to bottom, var(--paper) 0 30px, var(--paper-line) 34px 36px);
       border-radius:14px;
       padding:26px 26px 22px 34px;
       box-shadow:0 12px 24px var(--paper-shadow);
       border:1px solid rgba(0,0,0,.06);
     }
     .paper:before{
-      content:"";
-      position:absolute; left:18px; top:12px; bottom:12px; width:2px;
-      background:#ff9cb6; opacity:.6;
-      border-radius:2px;
+      content:""; position:absolute; left:18px; top:12px; bottom:12px; width:2px;
+      background:#ff9cb6; opacity:.6; border-radius:2px;
     }
-
     h1{ margin:0 0 .75rem 0; font-size:1.6rem; color:var(--panel) }
-
     .texto-carta{
       white-space: pre-line;
       font-family:'Dancing Script',cursive;
@@ -70,15 +49,9 @@
       text-shadow:0 1px 0 rgba(255,255,255,.35);
       text-align:left;
     }
-
-    .assinatura{ 
-      margin-top:1rem;
-      color:#5e0a2e;
-      font-weight:700;
-      text-align:right;
-      padding-right:.4rem;
-      font-family:'Dancing Script',cursive;
-      font-size:1.4rem;
+    .assinatura{
+      margin-top:1rem; color:#5e0a2e; font-weight:700; text-align:right; padding-right:.4rem;
+      font-family:'Dancing Script',cursive; font-size:1.4rem;
     }
 
     .hearts{ position:absolute; inset:0; overflow:hidden; z-index:1; pointer-events:none; }
@@ -89,8 +62,7 @@
     }
     .heart{
       position:absolute; width:var(--w,120px); height:var(--h,110px);
-      left:var(--x,50%); bottom:-140px;
-      animation:floatUp var(--dur,12s) linear forwards;
+      left:var(--x,50%); bottom:-140px; animation:floatUp var(--dur,12s) linear forwards;
       filter:drop-shadow(0 10px 18px rgba(0,0,0,.35));
     }
 
@@ -109,16 +81,7 @@
     .audio-toggle:hover{ filter:brightness(1.1); transform:translateY(-1px); }
     .audio-toggle.muted{ opacity:.85; }
 
-    /* Botão skip */
-    #skipType {
-      margin-top:.75rem;
-      background:var(--accent);
-      color:#fff;
-      border:none;
-      border-radius:.6rem;
-      padding:.5rem .8rem;
-      cursor:pointer;
-    }
+    #skipType{ margin-top:.75rem; background:var(--accent); color:#fff; border:none; border-radius:.6rem; padding:.5rem .8rem; cursor:pointer; }
   </style>
 </head>
 <body>
@@ -138,19 +101,9 @@
 
   <button id="audioBtn" class="audio-toggle muted" aria-pressed="false">🔇 Ligar som</button>
 
-  <!-- Overlay para destravar som (só aparece se bloquear) -->
-  <div id="audioOverlay" style="
-    position:fixed;inset:0;display:none;align-items:center;justify-content:center;
-    background:rgba(0,0,0,.35);backdrop-filter:blur(2px);z-index:6;">
-    <button id="audioStart" style="
-      background:#ff8fb2;color:#fff;border:none;border-radius:999px;
-      padding:.9rem 1.2rem;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,.35);">
-      🎵 Tocar música
-    </button>
-  </div>
-
-  <!-- Áudio com 2 fontes (AAC + MP3) -->
-  <audio id="bgAudio" preload="auto" loop muted playsinline webkit-playsinline>
+  <!-- Áudio com múltiplas fontes -->
+  <audio id="bgAudio" preload="auto" loop autoplay muted playsinline webkit-playsinline>
+    <source src="{{ asset('audio/ambiente.ogg') }}" type="audio/ogg">
     <source src="{{ asset('audio/ambiente.m4a') }}" type="audio/mp4">
     <source src="{{ asset('audio/ambiente.mp3') }}" type="audio/mpeg">
   </audio>
@@ -166,8 +119,9 @@
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
   <script>
     // ===== Corações =====
-    const fotos=@json($fotos);
-    const area=document.getElementById('hearts');
+    const fotos = @json($fotos);
+    const area  = document.getElementById('hearts');
+
     function spawnHeart(){
       if(!fotos.length) return;
       const w=90+Math.random()*80;
@@ -176,30 +130,31 @@
       const dur=10+Math.random()*8;
       const drift=(Math.random()*160-80);
       const foto=fotos[Math.floor(Math.random()*fotos.length)];
+
       const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
-      svg.setAttribute('viewBox',`0 0 ${w} ${h}`);
+      svg.setAttribute('viewBox', `0 0 ${w} ${h}`);  // <-- corrigido (template string)
       svg.classList.add('heart');
-      svg.style.setProperty('--w',w+'px');
-      svg.style.setProperty('--h',h+'px');
-      svg.style.setProperty('--x',x+'px');
-      svg.style.setProperty('--dur',dur+'s');
-      svg.style.setProperty('--drift',drift+'px');
+      svg.style.setProperty('--w', w+'px');
+      svg.style.setProperty('--h', h+'px');
+      svg.style.setProperty('--x', x+'px');
+      svg.style.setProperty('--dur', dur+'s');
+      svg.style.setProperty('--drift', drift+'px');
+
       const image=document.createElementNS('http://www.w3.org/2000/svg','image');
-      image.setAttributeNS('http://www.w3.org/1999/xlink','href',foto);
-      image.setAttribute('width',w);
-      image.setAttribute('height',h);
+      image.setAttributeNS('http://www.w3.org/1999/xlink','href', foto);
+      image.setAttribute('width', w);
+      image.setAttribute('height', h);
       image.setAttribute('preserveAspectRatio','xMidYMid slice');
       image.setAttribute('clip-path','url(#heartClip)');
+
       svg.appendChild(image);
       area.appendChild(svg);
-      svg.addEventListener('animationend',()=>svg.remove());
+      svg.addEventListener('animationend', ()=>svg.remove());
     }
 
-    // ===== Som ROBUSTO (desktop e mobile) =====
-    const audio    = document.getElementById('bgAudio');
-    const audioBtn = document.getElementById('audioBtn');
-    const overlay  = document.getElementById('audioOverlay');
-    const startBtn = document.getElementById('audioStart');
+    // ===== Som (autoplay + destrave por interação) =====
+    const audio   = document.getElementById('bgAudio');
+    const audioBtn= document.getElementById('audioBtn');
 
     function setBtn(playing){
       if(!audioBtn) return;
@@ -214,29 +169,10 @@
       }
     }
 
-    // Toca direto dentro do gesto (Safari/Chrome exigem)
-    function playDirect(vol=0.3){
+    async function tryPlay(volume=0.3){
       try{
-        audio.muted = false;
-        audio.volume = vol;
-        const p = audio.play(); // não usar await aqui
-        if (p && typeof p.then === 'function') {
-          p.then(()=> setBtn(true)).catch(()=> setBtn(false));
-        } else {
-          setBtn(!audio.paused);
-        }
-        return true;
-      }catch(e){
-        setBtn(false);
-        return false;
-      }
-    }
-
-    // Fallback com await (quando permitido)
-    async function tryPlay(vol=0.3){
-      try{
-        audio.muted = false;
-        audio.volume = vol;
+        audio.volume = volume;
+        audio.muted  = false;
         await audio.play();
         setBtn(true);
         return true;
@@ -246,26 +182,34 @@
       }
     }
 
-    function showOverlay(){ if (overlay) overlay.style.display = 'flex'; }
-    function hideOverlay(){ if (overlay) overlay.style.display = 'none'; }
-
-    // Botão flutuante liga/desliga
-    if (audioBtn) {
-      audioBtn.addEventListener('click', async () => {
-        if (audio.paused) {
-          if (!playDirect()) await tryPlay();
-        } else {
-          audio.pause();
-          setBtn(false);
-        }
-      });
+    function bindUnlockOnce(){
+      const opts = { once:true, passive:true };
+      const unlock = async () => {
+        audio.muted = false;
+        const ok = await tryPlay(0.3);
+        if(ok) detach();
+      };
+      function detach(){
+        window.removeEventListener('pointerdown', unlock, opts);
+        window.removeEventListener('click',       unlock, opts);
+        window.removeEventListener('touchstart',  unlock, opts);
+        window.removeEventListener('keydown',     unlock, opts);
+        window.removeEventListener('wheel',       unlock, opts);
+        document.removeEventListener('visibilitychange', onVis);
+      }
+      function onVis(){ if(document.visibilityState === 'visible') unlock(); }
+      window.addEventListener('pointerdown', unlock, opts);
+      window.addEventListener('click',       unlock, opts);
+      window.addEventListener('touchstart',  unlock, opts);
+      window.addEventListener('keydown',     unlock, opts);
+      window.addEventListener('wheel',       unlock, opts);
+      document.addEventListener('visibilitychange', onVis, { once:true });
     }
 
-    // Overlay (aparece só se bloquear)
-    if (startBtn) {
-      startBtn.addEventListener('click', () => {
-        const ok = playDirect(0.28);
-        if (ok) hideOverlay();
+    if(audioBtn){
+      audioBtn.addEventListener('click', async () => {
+        if(audio.paused){ await tryPlay(); }
+        else { audio.pause(); setBtn(false); }
       });
     }
 
@@ -277,15 +221,14 @@
       try{
         const heart=confetti.shapeFromText('❤');
         confetti({particleCount:30,spread:60,origin:{x:0.2+Math.random()*0.6,y:0.7},shapes:[heart],scalar:1.4,ticks:200});
-      }catch{burst(0.5,0.7,80);}
+      }catch{ burst(0.5,0.7,80); }
     }
 
     // ===== Typewriter =====
     const fullLetter=@json($carta);
     const typeEl=document.getElementById('typewriter');
     const skipBtn=document.getElementById('skipType');
-    const SPEED=22;
-    const PUNCT_PAUSE=180;
+    const SPEED=22, PUNCT_PAUSE=180;
     let skipped=false;
 
     async function typeWriterAll(text){
@@ -301,46 +244,22 @@
     }
     if(skipBtn){
       skipBtn.addEventListener('click',()=>{
-        skipped=true;
-        typeEl.textContent=fullLetter;
-        skipBtn.style.display='none';
+        skipped=true; typeEl.textContent=fullLetter; skipBtn.style.display='none';
       });
     }
 
     // ===== Init =====
     window.addEventListener('load', async () => {
-      // 1) Pré-play silencioso (prepara o player)
+      // “Pré-play” silencioso
       audio.muted = true;
-      try { await audio.play(); } catch(_) {}
+      await audio.play().catch(()=>{});
       audio.pause();
 
-      // 2) Tenta tocar com som (alguns navegadores deixam sem gesto)
+      // Tenta autoplay com som baixo
       const ok = await tryPlay(0.25);
+      if(!ok) bindUnlockOnce();
 
-      // 3) Se bloquear, mostra overlay e também destrava no 1º gesto global
-      if (!ok) {
-        showOverlay();
-
-        const unlock = () => {
-          if (playDirect(0.28)) {
-            hideOverlay();
-            detach();
-          }
-        };
-        const opts = { once:true, passive:true };
-        function detach(){
-          window.removeEventListener('pointerdown', unlock, opts);
-          window.removeEventListener('touchstart',  unlock, opts);
-          window.removeEventListener('click',       unlock, opts);
-          window.removeEventListener('keydown',     unlock, opts);
-        }
-        window.addEventListener('pointerdown', unlock, opts);
-        window.addEventListener('touchstart',  unlock, opts);
-        window.addEventListener('click',       unlock, opts);
-        window.addEventListener('keydown',     unlock, opts);
-      }
-
-      // ===== (resto do seu fluxo) =====
+      // Corações + confete + carta
       for(let i=0;i<12;i++) setTimeout(spawnHeart,i*300);
       setInterval(spawnHeart,300);
       confetti({particleCount:80,angle:60,spread:55,origin:{x:0},colors:['#ff8fb2','#ffe4ec','#ffd6e2']});
@@ -351,9 +270,8 @@
       skipBtn.style.display='none';
     });
 
-    // se voltar para a aba e estiver pausado, tenta ligar de novo
     document.addEventListener('visibilitychange', async () => {
-      if (document.visibilityState==='visible' && audio.paused) {
+      if(document.visibilityState==='visible' && audio.paused){
         await tryPlay(0.25);
       }
     });
