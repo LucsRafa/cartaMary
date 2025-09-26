@@ -151,7 +151,8 @@
       }
     }
 
-    async function playWith(volume=0.35){
+    async function playWith(volume=0.35, options={}){
+      const { showControls = true } = options;
       try{
         audio.volume = volume;
         audio.muted  = false;
@@ -160,27 +161,38 @@
         return true;
       }catch(e){
         console.warn('[AUDIO] play falhou:', e?.name || e);
-        // fallback: mostra controles nativos
-        audio.setAttribute('controls','controls');
+        if(showControls){
+          // fallback: mostra controles nativos
+          audio.setAttribute('controls','controls');
+        }
         setBtn(false);
         return false;
       }
     }
 
     function armUnlockOnce(){
-      const opts={ once:true, passive:true };
-      const unlock = async () => {
+      let armed = true;
+      const handler = async (evt) => {
+        if(!armed) return;
+        if(audioBtn && evt?.target && audioBtn.contains(evt.target) && evt.type !== 'keydown'){
+          return;
+        }
+        armed = false;
         const ok = await playWith(0.35);
-        if(ok) detach();
+        if(ok){
+          detach();
+        } else {
+          armed = true;
+        }
       };
       function detach(){
-        window.removeEventListener('pointerdown', unlock, opts);
-        window.removeEventListener('keydown',     unlock, opts);
-        window.removeEventListener('touchstart',  unlock, opts);
+        window.removeEventListener('pointerdown', handler);
+        window.removeEventListener('keydown',     handler);
+        window.removeEventListener('touchstart',  handler);
       }
-      window.addEventListener('pointerdown', unlock, opts);
-      window.addEventListener('keydown',     unlock, opts);
-      window.addEventListener('touchstart',  unlock, opts);
+      window.addEventListener('pointerdown', handler, { passive:true });
+      window.addEventListener('keydown',     handler);
+      window.addEventListener('touchstart',  handler, { passive:true });
     }
 
     if(audioBtn){
@@ -237,7 +249,7 @@
 
         let autoPlayed = false;
         if(wantsAutoPlay){
-          autoPlayed = await playWith();
+          autoPlayed = await playWith(0.35, { showControls:false });
         }
         if(!autoPlayed){
           armUnlockOnce();
