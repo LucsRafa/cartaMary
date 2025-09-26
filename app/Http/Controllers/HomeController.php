@@ -79,7 +79,9 @@ Como dizíamos desde o início: hoje e sempre.💖");
         if ($fraseDigitada === $fraseAlvo) {
             session(['frase_ok' => true]);
             // manda pra carta com o texto salvo na sessão
-            return redirect()->route('carta')->with('carta', session('carta_texto'));
+            return redirect()->route('carta')
+                ->with('carta', session('carta_texto'))
+                ->with('auto_play_audio', true);
         }
 
        return back()->withErrors(['frase' => 'Errou 🤭 agora me deve um lanche 🍔']);
@@ -110,9 +112,12 @@ Como dizíamos desde o início: hoje e sempre.💖");
             shuffle($fotos);
         }
 
+        $autoPlayAudio = session()->pull('auto_play_audio', false);
+
         return view('carta', [
             'carta' => session('carta', session('carta_texto', 'Texto da carta aqui...')),
             'fotos' => $fotos,
+            'autoPlayAudio' => $autoPlayAudio,
         ]);
     }
 

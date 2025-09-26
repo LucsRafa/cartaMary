@@ -4,7 +4,8 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Para você 💌</title>
-  <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg?v=1') }}">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=1">
+  <link rel="alternate icon" href="/favicon.ico">
   <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&display=swap" rel="stylesheet">
 
   <style>
@@ -98,6 +99,8 @@
   <script>
   (() => {
     'use strict';
+
+    const wantsAutoPlay = @json($autoPlayAudio ?? false);
 
     // ===== Corações =====
     const fotos = @json($fotos);
@@ -223,17 +226,22 @@
 
     // ===== Init =====
     window.addEventListener('load', async () => {
-      // 1) tenta autoplay silencioso (permitido pelos browsers)
       if(audio){
         try{
           audio.muted = true;
-          await audio.play(); // toca em mute
+          await audio.play();
           console.log('[AUDIO] autoplay silencioso OK');
         }catch(e){
           console.warn('[AUDIO] autoplay silencioso bloqueado:', e?.name || e);
         }
-        // arma desbloqueio de som na 1ª interação
-        armUnlockOnce();
+
+        let autoPlayed = false;
+        if(wantsAutoPlay){
+          autoPlayed = await playWith();
+        }
+        if(!autoPlayed){
+          armUnlockOnce();
+        }
         setBtn(!audio.paused);
       }
 
